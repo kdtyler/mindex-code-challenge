@@ -9,6 +9,10 @@ public class Compensation {
 
     private String employeeId;
 
+    public Compensation() {
+
+    }
+
     public Compensation(String employeeId, String salary, String effectiveDate) {
         this.salary = salary;
         this.effectiveDate = effectiveDate;
@@ -25,8 +29,8 @@ public class Compensation {
 //        this.employee = employee;
 //    }
 
-    public void getEmployeeId(String employeeId) {
-        this.employeeId = employeeId;
+    public String getEmployeeId() {
+        return employeeId;
     }
 
     public void setEmployeeId(String employeeId) {
