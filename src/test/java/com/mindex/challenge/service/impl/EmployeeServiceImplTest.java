@@ -9,14 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -76,6 +72,29 @@ public class EmployeeServiceImplTest {
 
         assertEmployeeEquivalence(readEmployee, updatedEmployee);
     }
+
+
+    @Test
+    public void testCreateEmployeeWithNullLastName() {
+        Employee testEmployee = new Employee();
+        testEmployee.setFirstName("John");
+        testEmployee.setLastName(null); // Setting lastName to null
+        testEmployee.setDepartment("Engineering");
+        testEmployee.setPosition("Developer");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains("Last name cannot be null or empty"));
+    }
+
+
 
     private static void assertEmployeeEquivalence(Employee expected, Employee actual) {
         assertEquals(expected.getFirstName(), actual.getFirstName());

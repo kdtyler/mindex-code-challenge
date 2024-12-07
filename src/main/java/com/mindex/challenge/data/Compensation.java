@@ -1,12 +1,17 @@
 package com.mindex.challenge.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.NotBlank;
+
 
 public class Compensation {
+    @NotBlank(message = "Salary cannot be null or empty")
     private String salary;
+    @NotBlank(message = "Effective Date cannot be null or empty")
     private String effectiveDate;
     //private Employee employee;
 
+    @NotBlank(message = "Employee ID cannot be null or empty")
     private String employeeId;
 
     public Compensation() {

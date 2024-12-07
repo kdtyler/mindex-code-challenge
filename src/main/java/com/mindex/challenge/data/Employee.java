@@ -1,7 +1,11 @@
 package com.mindex.challenge.data;
 
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
+
 
 import java.util.List;
 
@@ -9,11 +13,23 @@ public class Employee {
 //    @Id
 //    private String id;
 //    @Indexed(unique = true)
+
+    @NotBlank(message = "Employee ID cannot be null or empty")
     private String employeeId;
+
+    @NotBlank(message = "First name cannot be null or empty")
     private String firstName;
+
+    @NotBlank(message = "Last name cannot be null or empty")
+    @NotNull
     private String lastName;
-    private String position;
+
+    @NotBlank(message = "Department cannot be null or empty")
     private String department;
+
+    @NotBlank(message = "Position cannot be null or empty")
+    private String position;
+
     private List<Employee> directReports;
 
     public Employee() {

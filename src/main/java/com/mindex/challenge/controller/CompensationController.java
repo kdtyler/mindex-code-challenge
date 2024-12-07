@@ -2,10 +2,13 @@ package com.mindex.challenge.controller;
 
 import com.mindex.challenge.data.Compensation;
 import com.mindex.challenge.service.CompensationService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+//import javax.validation.Valid;
 
 @RestController
 public class CompensationController {
@@ -16,7 +19,7 @@ public class CompensationController {
     private CompensationService compensationService;
 
     @PostMapping("/compensation/{employeeId}")
-    public Compensation create(@PathVariable String employeeId, @RequestBody Compensation compensation) {
+    public Compensation create(@PathVariable String employeeId, @Valid @RequestBody Compensation compensation) {
         LOG.debug("Received compensation create request for [{}]", compensation);
         return compensationService.create(employeeId, compensation);
     }
