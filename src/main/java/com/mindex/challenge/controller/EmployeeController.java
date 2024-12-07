@@ -1,6 +1,7 @@
 package com.mindex.challenge.controller;
 
 import com.mindex.challenge.data.Employee;
+import com.mindex.challenge.data.ReportingStructure;
 import com.mindex.challenge.service.EmployeeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,10 @@ public class EmployeeController {
         employee.setEmployeeId(id);
         return employeeService.update(employee);
     }
-}
 
-// GitHub Test Commit 2- Creation of branch kevin-solution branch
+    @GetMapping("/reportingStructure/{id}")
+    public ReportingStructure getReportingStructure(@PathVariable String id) {
+        LOG.debug("Received employee create request for id [{}]", id);
+        return employeeService.getReportingStructure(id);
+    }
+}
