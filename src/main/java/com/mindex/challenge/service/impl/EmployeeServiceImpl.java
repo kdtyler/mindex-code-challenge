@@ -50,7 +50,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return employeeRepository.save(employee);
     }
-
+    /*
     @Override
     public ReportingStructure getReportingStructure(String employeeId) {
         LOG.debug("Getting reporting structure for employee with id [{}]", employeeId);
@@ -70,6 +70,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         return count;
     }
+    */
+
 
     /*
     @Override
