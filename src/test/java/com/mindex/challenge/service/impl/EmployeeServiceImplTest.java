@@ -217,21 +217,22 @@ public class EmployeeServiceImplTest {
         assertTrue(response.getBody().contains("Position cannot be null or empty"));
     }
 
-//    @Test
-//    public void testCreateEmployeeWithInvalidEmployeeId() {
-//        testEmployee.setEmployeeId("invalid-id");
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
-//
-//        ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
-//
-//        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-//        assertNotNull(response.getBody());
-//        assertTrue(response.getBody().contains("Employee ID must be a valid UUID"));
-//    }
+    // This test will be unneeded if JSONIgnore added to employeeID
+    @Test
+    public void testCreateEmployeeWithInvalidEmployeeId() {
+        testEmployee.setEmployeeId("invalid-id");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains("Employee ID must be a valid UUID"));
+    }
 
     @Test
     public void testUpdateEmployeeWithNullFirstName() {

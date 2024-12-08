@@ -1,24 +1,32 @@
 package com.mindex.challenge.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+
+import java.time.LocalDate;
+import java.util.Date;
 
 
 public class Compensation {
-    @NotBlank(message = "Salary cannot be null or empty")
-    private String salary;
-    @NotBlank(message = "Effective Date cannot be null or empty")
-    private String effectiveDate;
+    @NotNull(message = "Salary cannot be null")
+    @PositiveOrZero(message = "Salary must be positive or zero")
+    private int salary;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate effectiveDate;
     //private Employee employee;
 
-    @NotBlank(message = "Employee ID cannot be null or empty")
     private String employeeId;
 
     public Compensation() {
 
     }
 
-    public Compensation(String employeeId, String salary, String effectiveDate) {
+    public Compensation(String employeeId, int salary, LocalDate effectiveDate) {
         this.salary = salary;
         this.effectiveDate = effectiveDate;
 //        this.employee = employee;
@@ -42,19 +50,19 @@ public class Compensation {
         this.employeeId = employeeId;
     }
 
-    public String getSalary() {
+    public int getSalary() {
         return salary;
     }
 
-    public void setSalary(String salary) {
+    public void setSalary(int salary) {
         this.salary = salary;
     }
 
-    public String getEffectiveDate() {
+    public LocalDate getEffectiveDate() {
         return effectiveDate;
     }
 
-    public void setEffectiveDate(String effectiveDate) {
+    public void setEffectiveDate(LocalDate effectiveDate) {
         this.effectiveDate = effectiveDate;
     }
 }
