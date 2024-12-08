@@ -29,11 +29,19 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
     }
 
     private int calculateNumberOfReports(Employee employee) {
+        if (employee == null) {
+            return 0;
+        }
+
+        System.out.println("calculateNumberOfReports on employee: " + employee.getFirstName() + " " + employee.getLastName());
+
         int numberOfReports = 0;
-        if (employee.getDirectReports() != null) {
+        if (employee.getDirectReports() != null && !employee.getDirectReports().isEmpty()) {
             numberOfReports += employee.getDirectReports().size();
+            System.out.println("numberOfReports: " + numberOfReports);
             for (Employee directReport : employee.getDirectReports()) {
                 Employee fullDirectReport = employeeRepository.findByEmployeeId(directReport.getEmployeeId());
+                System.out.println("fullDirectReport: " + fullDirectReport.getFirstName() + " " + fullDirectReport.getLastName());
                 numberOfReports += calculateNumberOfReports(fullDirectReport);
             }
         }

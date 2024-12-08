@@ -21,6 +21,7 @@ public class Employee {
 
     // TODO: make field @JsonIgnore and refactor as needed
     //Quick implementation of UUID validation. If time available, can look into UUID class/validator
+    @Id
     @Pattern(regexp = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", message = "Employee ID must be a valid UUID")
     private String employeeId;
 

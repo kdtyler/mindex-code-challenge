@@ -4,7 +4,6 @@ import com.mindex.challenge.data.Employee;
 import com.mindex.challenge.data.ReportingStructure;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,7 +19,6 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -28,6 +26,10 @@ public class ReportingStructureServiceImplTest {
 
     private String reportingStructureUrl;
     private String employeeUrl;
+    private Employee employee1;
+    private Employee employee2;
+    private Employee employee3;
+    private Employee employee4;
 
     @LocalServerPort
     private int port;
@@ -40,57 +42,62 @@ public class ReportingStructureServiceImplTest {
         reportingStructureUrl = "http://localhost:" + port + "/reportingStructure/{id}";
         employeeUrl = "http://localhost:" + port + "/employee";
 
-        // Create a test employee with direct reports
-        Employee employee1 = new Employee();
-//        employee1.setEmployeeId("16a596ae-edd3-4847-99fe-c4518e82c86f");
-//        employee1.setFirstName("John");
-//        employee1.setLastName("Doe");
-//        employee1.setDepartment("Engineering");
-//        employee1.setPosition("Developer");
+        // Creates a test employee with direct reports
+        employee1 = new Employee();
+        employee1.setFirstName("Kevin");
+        employee1.setLastName("Layer1");
+        employee1.setDepartment("Engineering");
+        employee1.setPosition("Developer");
 
-        Employee employee2 = new Employee();
-//        employee2.setEmployeeId("b7839309-3348-463b-a7e3-5de1c168beb3");
-//        employee2.setFirstName("Jane");
-//        employee2.setLastName("Smith");
-//        employee2.setDepartment("Engineering");
-//        employee2.setPosition("Developer");
+        employee2 = new Employee();
+        employee2.setFirstName("David");
+        employee2.setLastName("Layer2");
+        employee2.setDepartment("Engineering");
+        employee2.setPosition("Developer");
 
-        Employee employee3 = new Employee();
-//        employee3.setEmployeeId("03aa1462-ffa9-4978-901b-7c001562cf6f");
-//        employee3.setFirstName("Jim");
-//        employee3.setLastName("Brown");
-//        employee3.setDepartment("Engineering");
-//        employee3.setPosition("Developer");
+        employee3 = new Employee();
+        employee3.setFirstName("Cindy");
+        employee3.setLastName("Layer2");
+        employee3.setDepartment("Engineering");
+        employee3.setPosition("Developer");
+
+        employee4 = new Employee();
+        employee4.setFirstName("Larry");
+        employee4.setLastName("Layer3");
+        employee4.setDepartment("Engineering");
+        employee4.setPosition("Developer");
+
+        employee1.setDirectReports(Arrays.asList(employee2, employee3));
+        employee3.setDirectReports(Arrays.asList(employee4));
+
+        System.out.println("employee1 DirectReport1 EmployeeId: " + employee1.getDirectReports().getFirst().getEmployeeId());
+        System.out.println("employee1 DirectReport2 firstName: " + employee1.getDirectReports().getFirst().getFirstName());
 
         employee1 = restTemplate.postForEntity(employeeUrl, employee1, Employee.class).getBody();
         employee2 = restTemplate.postForEntity(employeeUrl, employee2, Employee.class).getBody();
         employee3 = restTemplate.postForEntity(employeeUrl, employee3, Employee.class).getBody();
+        employee4 = restTemplate.postForEntity(employeeUrl, employee4, Employee.class).getBody();
 
-        // Keeping in for now to ensure test is similar to starting database snapshot
-        employee1.setDirectReports(Arrays.asList(employee2, employee3));
+        employee3.setDirectReports(Arrays.asList(employee4));
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Employee> request = new HttpEntity<>(employee1, headers);
-        restTemplate.exchange(employeeUrl, HttpMethod.PUT, request, Employee.class);
+        HttpEntity<Employee> request = new HttpEntity<>(employee3, headers);
+        restTemplate.exchange(employeeUrl + "/{id}", HttpMethod.PUT, request, Employee.class, employee3.getEmployeeId());
+
+        employee1.setDirectReports(Arrays.asList(employee2, employee3));
+        request = new HttpEntity<>(employee1, headers);
+        restTemplate.exchange(employeeUrl + "/{id}", HttpMethod.PUT, request, Employee.class, employee1.getEmployeeId());
+
     }
 
     @Test
     public void testGetReportingStructureByEmployeeId() {
-        Employee testEmployee = restTemplate.getForEntity(employeeUrl + "/{id}", Employee.class, "16a596ae-edd3-4847-99fe-c4518e82c86f").getBody();
+        Employee testEmployee = restTemplate.getForEntity(employeeUrl + "/{id}", Employee.class, employee1.getEmployeeId()).getBody();
         ReportingStructure reportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, testEmployee.getEmployeeId()).getBody();
 
         assertNotNull(reportingStructure);
+        assertNotNull(reportingStructure.getEmployee());
         assertEquals(testEmployee.getEmployeeId(), reportingStructure.getEmployee().getEmployeeId());
-        assertEquals(4, reportingStructure.getNumberOfReports());
+        assertEquals(3, reportingStructure.getNumberOfReports());
     }
-
-//    @Disabled
-//    @Test
-//    public void testGetReportingStructureByInvalidEmployeeId() {
-//        Exception exception = assertThrows(RuntimeException.class, () -> {
-//            restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, "invalid-id");
-//        });
-//
-//        assertEquals("Invalid employeeId: invalid-id", exception.getMessage());
-//    }
 }

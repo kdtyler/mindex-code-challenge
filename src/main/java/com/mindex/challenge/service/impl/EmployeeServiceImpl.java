@@ -46,6 +46,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
 
+    // Currently acting as a PutOrUpdate. If the employeeId does not exist, it will create a new one.
     @Override
     public Employee update(Employee employee) {
         LOG.debug("Updating employee [{}]", employee);
@@ -60,36 +61,4 @@ public class EmployeeServiceImpl implements EmployeeService {
                 employee1.getDepartment().equals(employee2.getDepartment()) &&
                 employee1.getDirectReports().equals(employee2.getDirectReports());
     }
-
-    /*
-    @Override
-    public Employee update(Employee employee) {
-    LOG.debug("Updating employee [{}]", employee);
-
-    Employee existingEmployee = employeeRepository.findByEmployeeId(employee.getEmployeeId());
-    if (existingEmployee == null) {
-        throw new RuntimeException("Employee not found with id: " + employee.getEmployeeId());
-    }
-
-    if (employee.getFirstName() != null) {
-        existingEmployee.setFirstName(employee.getFirstName());
-    }
-    if (employee.getLastName() != null) {
-        existingEmployee.setLastName(employee.getLastName());
-    }
-    if (employee.getPosition() != null) {
-        existingEmployee.setPosition(employee.getPosition());
-    }
-    if (employee.getDepartment() != null) {
-        existingEmployee.setDepartment(employee.getDepartment());
-    }
-    if (employee.getDirectReports() != null) {
-        existingEmployee.setDirectReports(employee.getDirectReports());
-    }
-
-
-    return employeeRepository.save(existingEmployee);
-    }
-
-     */
 }
