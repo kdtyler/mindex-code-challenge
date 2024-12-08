@@ -19,29 +19,32 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
 
     @Override
     public ReportingStructure getReportingStructureByEmployeeId(String employeeId) {
+        LOG.debug("Getting reporting structure for employee with id [{}]", employeeId);
+
         Employee employee = employeeRepository.findByEmployeeId(employeeId);
         if (employee == null) {
             throw new RuntimeException("Invalid employeeId: " + employeeId);
         }
 
-        int numberOfReports = calculateNumberOfReports(employee);
-        return new ReportingStructure(employee, numberOfReports);
+        ReportingStructure reportingStructure = new ReportingStructure();
+        reportingStructure.setEmployee(employee);
+        reportingStructure.setNumberOfReports(calculateNumberOfReports(employee));
+
+        return reportingStructure;
     }
 
+    // Recursively calls calculateNumberOfReports to get the total number of reports for an employee
     private int calculateNumberOfReports(Employee employee) {
         if (employee == null) {
             return 0;
         }
 
-        System.out.println("calculateNumberOfReports on employee: " + employee.getFirstName() + " " + employee.getLastName());
-
         int numberOfReports = 0;
         if (employee.getDirectReports() != null && !employee.getDirectReports().isEmpty()) {
             numberOfReports += employee.getDirectReports().size();
-            System.out.println("numberOfReports: " + numberOfReports);
+
             for (Employee directReport : employee.getDirectReports()) {
                 Employee fullDirectReport = employeeRepository.findByEmployeeId(directReport.getEmployeeId());
-                System.out.println("fullDirectReport: " + fullDirectReport.getFirstName() + " " + fullDirectReport.getLastName());
                 numberOfReports += calculateNumberOfReports(fullDirectReport);
             }
         }

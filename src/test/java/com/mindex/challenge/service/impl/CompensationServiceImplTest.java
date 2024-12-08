@@ -14,12 +14,8 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.UUID;
 
 import static org.junit.Assert.*;
 
@@ -103,7 +99,7 @@ public class CompensationServiceImplTest {
         // Create compensation with invalid salary
         Compensation testCompensation = new Compensation();
         testCompensation.setEmployeeId(createdEmployee.getEmployeeId());
-        testCompensation.setSalary(-100); // Invalid salary
+        testCompensation.setSalary(-100); // Invalid salary, can't be negative
         LocalDate effectiveDate = LocalDate.parse("2023-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         testCompensation.setEffectiveDate(effectiveDate);
 
@@ -123,7 +119,7 @@ public class CompensationServiceImplTest {
         Compensation testCompensation = new Compensation();
         testCompensation.setEmployeeId(createdEmployee.getEmployeeId());
         testCompensation.setSalary(100000);
-        String invalidDate = "01-01-2023"; // Invalid date format
+        String invalidDate = "01-01-2023"; // Invalid date format, should be yyyy-MM-dd
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

@@ -1,7 +1,6 @@
 package com.mindex.challenge.controller;
 
 import com.mindex.challenge.data.Employee;
-import com.mindex.challenge.data.ReportingStructure;
 import com.mindex.challenge.service.EmployeeService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class EmployeeController {
+
     private static final Logger LOG = LoggerFactory.getLogger(EmployeeController.class);
 
     @Autowired

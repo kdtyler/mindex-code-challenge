@@ -1,11 +1,9 @@
 package com.mindex.challenge.service.impl;
 
-import com.mindex.challenge.dao.EmployeeRepository;
 import com.mindex.challenge.data.Employee;
 import com.mindex.challenge.service.EmployeeService;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Order;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,7 +40,6 @@ public class EmployeeServiceImplTest {
         employeeIdUrl = "http://localhost:" + port + "/employee/{id}";
 
         testEmployee = new Employee();
-//        testEmployee.setEmployeeId("16a596ae-edd3-4847-99fe-c4518e82c86f");
         testEmployee.setEmployeeId(UUID.randomUUID().toString());
         testEmployee.setFirstName("Kevin");
         testEmployee.setLastName("Tyler");
@@ -55,22 +52,13 @@ public class EmployeeServiceImplTest {
 
         // Create checks
         Employee createdEmployee = restTemplate.postForEntity(employeeUrl, testEmployee, Employee.class).getBody();
-
-        System.out.println("createdEmployee firstName: " + createdEmployee.getFirstName());
-        System.out.println("createdEmployee employeeID: " + createdEmployee.getEmployeeId());
-
-
         assertNotNull(createdEmployee.getEmployeeId());
-        System.out.println("createdEmployee firstName: " + createdEmployee.getFirstName());
-        System.out.println("createdEmployee employeeID: " + createdEmployee.getEmployeeId());
         assertEmployeeEquivalence(testEmployee, createdEmployee);
-
 
         // Read checks
         Employee readEmployee = restTemplate.getForEntity(employeeIdUrl, Employee.class, createdEmployee.getEmployeeId()).getBody();
         assertEquals(createdEmployee.getEmployeeId(), readEmployee.getEmployeeId());
         assertEmployeeEquivalence(createdEmployee, readEmployee);
-
 
         // Update checks
         readEmployee.setPosition("Development Manager");

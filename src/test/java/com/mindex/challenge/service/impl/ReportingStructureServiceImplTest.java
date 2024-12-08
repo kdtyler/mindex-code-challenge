@@ -42,7 +42,13 @@ public class ReportingStructureServiceImplTest {
         reportingStructureUrl = "http://localhost:" + port + "/reportingStructure/{id}";
         employeeUrl = "http://localhost:" + port + "/employee";
 
-        // Creates a test employee with direct reports
+        /*
+        Create employee objects for testing. Structure is as follows:
+        employee1 -> employee2, employee3.
+        employee3 -> employee4
+
+        structure = (boss) -> (direct reports)
+        */
         employee1 = new Employee();
         employee1.setFirstName("Kevin");
         employee1.setLastName("Layer1");
@@ -70,14 +76,12 @@ public class ReportingStructureServiceImplTest {
         employee1.setDirectReports(Arrays.asList(employee2, employee3));
         employee3.setDirectReports(Arrays.asList(employee4));
 
-        System.out.println("employee1 DirectReport1 EmployeeId: " + employee1.getDirectReports().getFirst().getEmployeeId());
-        System.out.println("employee1 DirectReport2 firstName: " + employee1.getDirectReports().getFirst().getFirstName());
-
         employee1 = restTemplate.postForEntity(employeeUrl, employee1, Employee.class).getBody();
         employee2 = restTemplate.postForEntity(employeeUrl, employee2, Employee.class).getBody();
         employee3 = restTemplate.postForEntity(employeeUrl, employee3, Employee.class).getBody();
         employee4 = restTemplate.postForEntity(employeeUrl, employee4, Employee.class).getBody();
 
+        // Update employee objects to include direct reports (necessary due to how assignment of employeeId works)
         employee3.setDirectReports(Arrays.asList(employee4));
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -87,9 +91,9 @@ public class ReportingStructureServiceImplTest {
         employee1.setDirectReports(Arrays.asList(employee2, employee3));
         request = new HttpEntity<>(employee1, headers);
         restTemplate.exchange(employeeUrl + "/{id}", HttpMethod.PUT, request, Employee.class, employee1.getEmployeeId());
-
     }
 
+    // Tests reporting structure for employee1 (Kevin Layer1). This should output 3. 2 are directly below Kevin, and 1 is directly below a subordinate of Kevin
     @Test
     public void testGetReportingStructureByEmployeeId() {
         Employee testEmployee = restTemplate.getForEntity(employeeUrl + "/{id}", Employee.class, employee1.getEmployeeId()).getBody();
