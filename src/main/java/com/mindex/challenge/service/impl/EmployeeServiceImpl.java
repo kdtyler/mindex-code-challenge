@@ -34,7 +34,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Employee read(String id) {
-        LOG.debug("Creating employee with id [{}]", id);
+        LOG.debug("Reading employee with id [{}]", id);
 
         Employee employee = employeeRepository.findByEmployeeId(id);
 
@@ -52,28 +52,14 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return employeeRepository.save(employee);
     }
-    /*
-    @Override
-    public ReportingStructure getReportingStructure(String employeeId) {
-        LOG.debug("Getting reporting structure for employee with id [{}]", employeeId);
-        Employee employee = read(employeeId);
-        int numberOfReports = calculateNumberOfReports(employee);
-        return new ReportingStructure(employee, numberOfReports);
-    }
 
-    private int calculateNumberOfReports(Employee employee) {
-        List<Employee> directReports = employee.getDirectReports();
-        int count = 0;
-        if (directReports != null) {
-            count += directReports.size();
-            for (Employee directReport : directReports) {
-                count += calculateNumberOfReports(directReport);
-            }
-        }
-        return count;
+    private boolean isEqualEmployees(Employee employee1, Employee employee2) {
+        return employee1.getFirstName().equals(employee2.getFirstName()) &&
+                employee1.getLastName().equals(employee2.getLastName()) &&
+                employee1.getPosition().equals(employee2.getPosition()) &&
+                employee1.getDepartment().equals(employee2.getDepartment()) &&
+                employee1.getDirectReports().equals(employee2.getDirectReports());
     }
-    */
-
 
     /*
     @Override

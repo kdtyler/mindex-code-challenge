@@ -1,27 +1,33 @@
 package com.mindex.challenge.data;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 
 import java.util.List;
 
+//@Document
+//@Indexed(unique = true)
 public class Employee {
 //    @Id
 //    private String id;
 //    @Indexed(unique = true)
 
-    @NotBlank(message = "Employee ID cannot be null or empty")
+    // TODO: make field @JsonIgnore and refactor as needed
+    //Quick implementation of UUID validation. If time available, can look into UUID class/validator
+    @Pattern(regexp = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", message = "Employee ID must be a valid UUID")
     private String employeeId;
 
     @NotBlank(message = "First name cannot be null or empty")
     private String firstName;
 
     @NotBlank(message = "Last name cannot be null or empty")
-    @NotNull
     private String lastName;
 
     @NotBlank(message = "Department cannot be null or empty")
