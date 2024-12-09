@@ -93,7 +93,7 @@ public class ReportingStructureServiceImplTest {
         restTemplate.exchange(employeeUrl + "/{id}", HttpMethod.PUT, request, Employee.class, employee1.getEmployeeId());
     }
 
-    // Tests reporting structure for employee1 (Kevin Layer1). This should output 3. 2 are directly below Kevin, and 1 is directly below a subordinate of Kevin
+    // Tests reporting structure for employee1 (Kevin Layer1). This should output 3. Two are directly below Kevin, and one is directly below a subordinate of Kevin
     @Test
     public void testGetReportingStructureByEmployeeId() {
         Employee testEmployee = restTemplate.getForEntity(employeeUrl + "/{id}", Employee.class, employee1.getEmployeeId()).getBody();
@@ -103,5 +103,36 @@ public class ReportingStructureServiceImplTest {
         assertNotNull(reportingStructure.getEmployee());
         assertEquals(testEmployee.getEmployeeId(), reportingStructure.getEmployee().getEmployeeId());
         assertEquals(3, reportingStructure.getNumberOfReports());
+    }
+
+    @Test
+    public void testReportingStructureExcludesSoftDeletedEmployeesAtLeaves() {
+        // Soft delete employee4
+        restTemplate.delete(employeeUrl + "/" + employee4.getEmployeeId());
+
+        // Get reporting structure for employee1
+        ReportingStructure reportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, employee1.getEmployeeId()).getBody();
+
+        // Verify that the reporting structure does not include soft-deleted employees
+        assertNotNull(reportingStructure);
+        assertNotNull(reportingStructure.getEmployee());
+        assertEquals(employee1.getEmployeeId(), reportingStructure.getEmployee().getEmployeeId());
+        assertEquals(2, reportingStructure.getNumberOfReports()); // Employee 4 no longer counted
+    }
+
+    @Test
+    public void testReportingStructureWithSoftDeletedEmployeeInHierarchy() {
+        // Soft delete employee3
+        restTemplate.delete(employeeUrl + "/" + employee3.getEmployeeId());
+
+        // Get reporting structure for employee1
+        ReportingStructure reportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, employee1.getEmployeeId()).getBody();
+
+        // Verify that the reporting structure calculation is correct
+        // Employee3 not counted because it's soft-deleted. Employee4 also not counted because chain of reports broken to it from root
+        assertNotNull(reportingStructure);
+        assertNotNull(reportingStructure.getEmployee());
+        assertEquals(employee1.getEmployeeId(), reportingStructure.getEmployee().getEmployeeId());
+        assertEquals(1, reportingStructure.getNumberOfReports());
     }
 }

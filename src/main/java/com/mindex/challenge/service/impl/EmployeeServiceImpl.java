@@ -2,6 +2,7 @@ package com.mindex.challenge.service.impl;
 
 import com.mindex.challenge.dao.EmployeeRepository;
 import com.mindex.challenge.data.Employee;
+import com.mindex.challenge.exceptionhandling.EmployeeNotFoundException;
 import com.mindex.challenge.service.EmployeeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,20 +35,35 @@ public class EmployeeServiceImpl implements EmployeeService {
     public Employee read(String id) {
         LOG.debug("Reading employee with id [{}]", id);
 
-        Employee employee = employeeRepository.findByEmployeeId(id);
+        Employee employee = employeeRepository.findByEmployeeIdAndIsDeletedFalse(id);
 
         if (employee == null) {
-            throw new RuntimeException("Invalid employeeId: " + id);
+            throw new EmployeeNotFoundException("Employee not found with id: " + id);
         }
 
         return employee;
     }
 
-    // Currently acting as a PutOrUpdate. If the employeeId does not exist, it will create a new one.
+    // Currently acts purely as an update, not an updateOrCreate. Will not update soft-deleted employees
     @Override
     public Employee update(Employee employee) {
         LOG.debug("Updating employee [{}]", employee);
 
+        Employee existingEmployee = employeeRepository.findByEmployeeId(employee.getEmployeeId());
+
+        if (existingEmployee == null || existingEmployee.getIsDeleted()) {
+            throw new EmployeeNotFoundException("Cannot update a non-existent or soft-deleted employee with id: " + employee.getEmployeeId());
+        }
+
         return employeeRepository.save(employee);
+    }
+
+    @Override
+    public void delete(String id) {
+        LOG.debug("Soft deleting employee with id [{}]", id);
+
+        Employee employee = read(id);
+        employee.setIsDeleted(true);
+        employeeRepository.save(employee);
     }
 }

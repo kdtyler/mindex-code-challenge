@@ -3,11 +3,15 @@ package com.mindex.challenge.service.impl;
 import com.mindex.challenge.dao.EmployeeRepository;
 import com.mindex.challenge.data.Employee;
 import com.mindex.challenge.data.ReportingStructure;
+import com.mindex.challenge.exceptionhandling.EmployeeNotFoundException;
 import com.mindex.challenge.service.ReportingStructureService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ReportingStructureServiceImpl implements ReportingStructureService {
@@ -21,9 +25,9 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
     public ReportingStructure getReportingStructureByEmployeeId(String employeeId) {
         LOG.debug("Getting reporting structure for employee with id [{}]", employeeId);
 
-        Employee employee = employeeRepository.findByEmployeeId(employeeId);
+        Employee employee = employeeRepository.findByEmployeeIdAndIsDeletedFalse(employeeId);
         if (employee == null) {
-            throw new RuntimeException("Invalid employeeId: " + employeeId);
+            throw new EmployeeNotFoundException("Employee not found with id: " + employeeId);
         }
 
         ReportingStructure reportingStructure = new ReportingStructure();
@@ -33,7 +37,12 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
         return reportingStructure;
     }
 
-    // Recursively calls calculateNumberOfReports to get the total number of reports for an employee
+    /*
+     * Recursively calls calculateNumberOfReports to get the total number of reports for an employee
+     * Will not count solf-deleted employees. Currently, a "chain" of reports can be broken
+     * if there is a soft-deleted employee in the chain. The count will only include employees directly in
+     * the tree with the starting node of the passed in employee.
+     */
     private int calculateNumberOfReports(Employee employee) {
         if (employee == null) {
             return 0;
@@ -41,11 +50,17 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
 
         int numberOfReports = 0;
         if (employee.getDirectReports() != null && !employee.getDirectReports().isEmpty()) {
-            numberOfReports += employee.getDirectReports().size();
 
-            for (Employee directReport : employee.getDirectReports()) {
-                Employee fullDirectReport = employeeRepository.findByEmployeeId(directReport.getEmployeeId());
-                numberOfReports += calculateNumberOfReports(fullDirectReport);
+            List<Employee> activeDirectReports = employee.getDirectReports().stream()
+                    .map(directReport -> employeeRepository.findByEmployeeIdAndIsDeletedFalse(directReport.getEmployeeId()))
+                    .filter(java.util.Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            numberOfReports += activeDirectReports.size();
+
+            for (Employee directReport : activeDirectReports) {
+                Employee checkedDirectReport = employeeRepository.findByEmployeeIdAndIsDeletedFalse(directReport.getEmployeeId());
+                numberOfReports += calculateNumberOfReports(checkedDirectReport);
             }
         }
         return numberOfReports;

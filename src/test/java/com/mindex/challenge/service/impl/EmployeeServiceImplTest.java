@@ -76,6 +76,47 @@ public class EmployeeServiceImplTest {
         assertEmployeeEquivalence(readEmployee, updatedEmployee);
     }
 
+    @Test
+    public void testReadSoftDeletedEmployee() {
+        // Create an employee
+        Employee createdEmployee = restTemplate.postForEntity(employeeUrl, testEmployee, Employee.class).getBody();
+        assertNotNull(createdEmployee.getEmployeeId());
+
+        // soft delete
+        restTemplate.delete(employeeIdUrl, createdEmployee.getEmployeeId());
+
+        // Attempt to read the soft-deleted employee
+        ResponseEntity<Employee> response = restTemplate.getForEntity(employeeIdUrl, Employee.class, createdEmployee.getEmployeeId());
+
+        // Verify that the employee is not found
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    public void testUpdateSoftDeletedEmployee() {
+        // Create an employee
+        Employee createdEmployee = restTemplate.postForEntity(employeeUrl, testEmployee, Employee.class).getBody();
+        assertNotNull(createdEmployee.getEmployeeId());
+
+        // Soft delete the employee
+        restTemplate.delete(employeeIdUrl, createdEmployee.getEmployeeId());
+
+        // Attempt to update the soft-deleted employee
+        createdEmployee.setPosition("Updated Position");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Employee> request = new HttpEntity<>(createdEmployee, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, createdEmployee.getEmployeeId());
+
+        // Verify that the update attempt returns the correct error message
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains("Cannot update a non-existent or soft-deleted employee with id:"));
+    }
+
 
     @Test
     public void testCreateEmployeeWithNullFirstName() {

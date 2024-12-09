@@ -25,7 +25,14 @@ public class Employee {
     @NotBlank(message = "Position cannot be null or empty")
     private String position;
 
+    /*
+    * Currently may include soft-deleted employees. Make sure to filter out
+    * if doing calculations where you want to only include active employees
+     */
     private List<Employee> directReports;
+
+    // Can potentially @Index for faster retrieval if project scales very large and the overhead is worth it
+    private boolean isDeleted = false;
 
     public Employee() {
     }
@@ -76,5 +83,13 @@ public class Employee {
 
     public void setDirectReports(List<Employee> directReports) {
         this.directReports = directReports;
+    }
+
+    public boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
 }
