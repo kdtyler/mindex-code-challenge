@@ -40,10 +40,10 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
     }
 
     /*
-     * Recursively calls calculateNumberOfReports to get the total number of reports for an employee
+     * Recursively calls calculateNumberOfReports to get the total number of reports for an employee.
      * Will not count solf-deleted employees. Currently, a "chain" of reports can be broken
      * if there is a soft-deleted employee in the chain. The count will only include employees directly in
-     * the tree with the starting node of the passed in employee.
+     * the tree with the starting node of the passed in employee. Assumes a tree structure (no cycles).
      */
     private int calculateNumberOfReports(Employee employee) {
         if (employee == null) {

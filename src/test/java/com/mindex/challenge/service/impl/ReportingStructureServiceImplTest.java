@@ -9,16 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
+import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static com.mindex.challenge.exceptionhandling.ErrorMessages.EMPLOYEE_NOT_FOUND;
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -26,10 +24,10 @@ public class ReportingStructureServiceImplTest {
 
     private String reportingStructureUrl;
     private String employeeUrl;
-    private Employee employee1;
-    private Employee employee2;
-    private Employee employee3;
-    private Employee employee4;
+    private Employee bigBoss;
+    private Employee middleMan1;
+    private Employee middleMan2;
+    private Employee gruntUnderMiddleMan2;
 
     @LocalServerPort
     private int port;
@@ -43,60 +41,41 @@ public class ReportingStructureServiceImplTest {
         employeeUrl = "http://localhost:" + port + "/employee";
 
         /*
-        Create employee objects for testing. Structure is as follows:
-        employee1 -> employee2, employee3.
-        employee3 -> employee4
-
-        structure = (boss) -> (direct reports)
+        * Create employee objects for testing. Structure is as follows:
+        * bigBoss -> middleMan1, middleMan2.
+        * middleMan2 -> gruntUnderMiddleMan2
+        *
+        * structure: (boss) -> (direct reports)
         */
-        employee1 = new Employee();
-        employee1.setFirstName("Kevin");
-        employee1.setLastName("Layer1");
-        employee1.setDepartment("Engineering");
-        employee1.setPosition("Developer");
+        bigBoss = createEmployee("Kevin", "Layer1", "Engineering", "Developer");
+        middleMan1 = createEmployee("David", "Layer2", "Engineering", "Developer");
+        middleMan2 = createEmployee("Cindy", "Layer2", "Engineering", "Developer");
+        gruntUnderMiddleMan2 = createEmployee("Larry", "Layer3", "Engineering", "Developer");
 
-        employee2 = new Employee();
-        employee2.setFirstName("David");
-        employee2.setLastName("Layer2");
-        employee2.setDepartment("Engineering");
-        employee2.setPosition("Developer");
+        bigBoss.setDirectReports(Arrays.asList(middleMan1, middleMan2));
+        middleMan2.setDirectReports(Arrays.asList(gruntUnderMiddleMan2));
 
-        employee3 = new Employee();
-        employee3.setFirstName("Cindy");
-        employee3.setLastName("Layer2");
-        employee3.setDepartment("Engineering");
-        employee3.setPosition("Developer");
-
-        employee4 = new Employee();
-        employee4.setFirstName("Larry");
-        employee4.setLastName("Layer3");
-        employee4.setDepartment("Engineering");
-        employee4.setPosition("Developer");
-
-        employee1.setDirectReports(Arrays.asList(employee2, employee3));
-        employee3.setDirectReports(Arrays.asList(employee4));
-
-        employee1 = restTemplate.postForEntity(employeeUrl, employee1, Employee.class).getBody();
-        employee2 = restTemplate.postForEntity(employeeUrl, employee2, Employee.class).getBody();
-        employee3 = restTemplate.postForEntity(employeeUrl, employee3, Employee.class).getBody();
-        employee4 = restTemplate.postForEntity(employeeUrl, employee4, Employee.class).getBody();
+        bigBoss = restTemplate.postForEntity(employeeUrl, bigBoss, Employee.class).getBody();
+        middleMan1 = restTemplate.postForEntity(employeeUrl, middleMan1, Employee.class).getBody();
+        middleMan2 = restTemplate.postForEntity(employeeUrl, middleMan2, Employee.class).getBody();
+        gruntUnderMiddleMan2 = restTemplate.postForEntity(employeeUrl, gruntUnderMiddleMan2, Employee.class).getBody();
 
         // Update employee objects to include direct reports (necessary due to how assignment of employeeId works)
-        employee3.setDirectReports(Arrays.asList(employee4));
+        middleMan2.setDirectReports(Arrays.asList(gruntUnderMiddleMan2));
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Employee> request = new HttpEntity<>(employee3, headers);
-        restTemplate.exchange(employeeUrl + "/{id}", HttpMethod.PUT, request, Employee.class, employee3.getEmployeeId());
+        HttpEntity<Employee> request = new HttpEntity<>(middleMan2, headers);
+        restTemplate.exchange(employeeUrl + "/{id}", HttpMethod.PUT, request, Employee.class, middleMan2.getEmployeeId());
 
-        employee1.setDirectReports(Arrays.asList(employee2, employee3));
-        request = new HttpEntity<>(employee1, headers);
-        restTemplate.exchange(employeeUrl + "/{id}", HttpMethod.PUT, request, Employee.class, employee1.getEmployeeId());
+        bigBoss.setDirectReports(Arrays.asList(middleMan1, middleMan2));
+        request = new HttpEntity<>(bigBoss, headers);
+        restTemplate.exchange(employeeUrl + "/{id}", HttpMethod.PUT, request, Employee.class, bigBoss.getEmployeeId());
     }
 
-    // Tests reporting structure for employee1 (Kevin Layer1). This should output 3. Two are directly below Kevin, and one is directly below a subordinate of Kevin
+    // Tests reporting structure for bigBoss. This should have numberOfReports = 3. Two middle men are below bigBoss, and a grunt is below middleMan2
     @Test
     public void testGetReportingStructureByEmployeeId() {
-        Employee testEmployee = restTemplate.getForEntity(employeeUrl + "/{id}", Employee.class, employee1.getEmployeeId()).getBody();
+        Employee testEmployee = restTemplate.getForEntity(employeeUrl + "/{id}", Employee.class, bigBoss.getEmployeeId()).getBody();
         ReportingStructure reportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, testEmployee.getEmployeeId()).getBody();
 
         assertNotNull(reportingStructure);
@@ -106,33 +85,70 @@ public class ReportingStructureServiceImplTest {
     }
 
     @Test
-    public void testReportingStructureExcludesSoftDeletedEmployeesAtLeaves() {
-        // Soft delete employee4
-        restTemplate.delete(employeeUrl + "/" + employee4.getEmployeeId());
+    public void testGetReportingStructureForEmployeeWithNoDirectReports() {
+        Employee employeeWithNoReports = restTemplate.getForEntity(employeeUrl + "/{id}", Employee.class, gruntUnderMiddleMan2.getEmployeeId()).getBody();
+        ReportingStructure reportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, employeeWithNoReports.getEmployeeId()).getBody();
 
-        // Get reporting structure for employee1
-        ReportingStructure reportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, employee1.getEmployeeId()).getBody();
-
-        // Verify that the reporting structure does not include soft-deleted employees
         assertNotNull(reportingStructure);
         assertNotNull(reportingStructure.getEmployee());
-        assertEquals(employee1.getEmployeeId(), reportingStructure.getEmployee().getEmployeeId());
-        assertEquals(2, reportingStructure.getNumberOfReports()); // Employee 4 no longer counted
+        assertEquals(employeeWithNoReports.getEmployeeId(), reportingStructure.getEmployee().getEmployeeId());
+        assertEquals(0, reportingStructure.getNumberOfReports());
+    }
+
+    @Test
+    public void testReportingStructureExcludesSoftDeletedEmployeesAtLeaves() {
+        // Soft delete gruntUnderMiddleMan2
+        restTemplate.delete(employeeUrl + "/" + gruntUnderMiddleMan2.getEmployeeId());
+
+        // Get reporting structure for bigBoss
+        ReportingStructure reportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, bigBoss.getEmployeeId()).getBody();
+
+        // Verify that the reporting structure does not include soft-deleted gruntUnderMiddleMan2
+        assertNotNull(reportingStructure);
+        assertNotNull(reportingStructure.getEmployee());
+        assertEquals(bigBoss.getEmployeeId(), reportingStructure.getEmployee().getEmployeeId());
+        assertEquals(2, reportingStructure.getNumberOfReports()); // gruntUnderMiddleMan2 no longer counted
     }
 
     @Test
     public void testReportingStructureWithSoftDeletedEmployeeInHierarchy() {
-        // Soft delete employee3
-        restTemplate.delete(employeeUrl + "/" + employee3.getEmployeeId());
+        // Soft delete middleMan2
+        restTemplate.delete(employeeUrl + "/" + middleMan2.getEmployeeId());
 
-        // Get reporting structure for employee1
-        ReportingStructure reportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, employee1.getEmployeeId()).getBody();
+        // Get reporting structure for bigBoss
+        ReportingStructure reportingStructure = restTemplate.getForEntity(reportingStructureUrl, ReportingStructure.class, bigBoss.getEmployeeId()).getBody();
 
         // Verify that the reporting structure calculation is correct
-        // Employee3 not counted because it's soft-deleted. Employee4 also not counted because chain of reports broken to it from root
+        // middleMan2 not counted because it's soft-deleted. gruntUnderMiddleMan2 also not counted because chain of reports broken to it from root
         assertNotNull(reportingStructure);
         assertNotNull(reportingStructure.getEmployee());
-        assertEquals(employee1.getEmployeeId(), reportingStructure.getEmployee().getEmployeeId());
+        assertEquals(bigBoss.getEmployeeId(), reportingStructure.getEmployee().getEmployeeId());
         assertEquals(1, reportingStructure.getNumberOfReports());
+    }
+
+    @Test
+    public void testGetReportingStructureForNonExistentEmployee() {
+        Employee nonExistentEmployee = new Employee();
+        nonExistentEmployee.setEmployeeId(UUID.randomUUID().toString());
+        nonExistentEmployee.setFirstName("Nonexistent");
+        nonExistentEmployee.setLastName("Employee");
+        nonExistentEmployee.setDepartment("Engineering");
+        nonExistentEmployee.setPosition("Developer");
+
+        ResponseEntity<String> response = restTemplate.getForEntity(reportingStructureUrl, String.class, nonExistentEmployee.getEmployeeId());
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
+    }
+
+    private Employee createEmployee(String firstName, String lastName, String department, String position) {
+        Employee employee = new Employee();
+        employee.setFirstName(firstName);
+        employee.setLastName(lastName);
+        employee.setDepartment(department);
+        employee.setPosition(position);
+
+        return employee;
     }
 }
