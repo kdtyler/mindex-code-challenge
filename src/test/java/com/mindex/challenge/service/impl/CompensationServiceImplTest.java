@@ -17,7 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-import static com.mindex.challenge.exceptionhandling.ErrorMessages.EMPLOYEE_NOT_FOUND;
+import static com.mindex.challenge.exceptionhandling.ErrorMessages.*;
 import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
@@ -50,88 +50,153 @@ public class CompensationServiceImplTest {
 
         // Create an employee
         Employee testEmployee = new Employee();
-        testEmployee.setEmployeeId("16a596ae-edd3-4847-99fe-c4518e82c86f");
         testEmployee.setFirstName("Kevin");
         testEmployee.setLastName("Tyler");
         testEmployee.setDepartment("Engineering");
         testEmployee.setPosition("Developer");
 
+        // Create employee in database. Assigns employeeId
         createdEmployee = restTemplate.postForEntity(employeeUrl, testEmployee, Employee.class).getBody();
         assertNotNull(createdEmployee.getEmployeeId());
     }
 
     @Test
     public void testCreateCompensation() {
-        // Create compensation
-        Compensation testCompensation = new Compensation();
-        testCompensation.setEmployeeId(createdEmployee.getEmployeeId());
-        testCompensation.setSalary(100000);
-        LocalDate effectiveDate = LocalDate.parse("2023-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        testCompensation.setEffectiveDate(effectiveDate);
+        // Create test compensation
+        String effectiveDateAsString = "2023-01-01";
+        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, effectiveDateAsString);
 
+        // Post the compensation
         Compensation createdCompensation = restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), testCompensation, Compensation.class).getBody();
+
+        // Verify that the created compensation is not null and is equivalent to the test compensation
         assertNotNull(createdCompensation);
-        assertEquals(createdEmployee.getEmployeeId(), createdCompensation.getEmployeeId());
-        assertEquals(100000, createdCompensation.getSalary());
-        assertEquals(effectiveDate, createdCompensation.getEffectiveDate());
+        assertCompensationEquivalence(testCompensation, createdCompensation);
     }
 
     @Test
     public void testReadCompensation() {
         // Create compensation
-        Compensation testCompensation = new Compensation();
-        testCompensation.setEmployeeId(createdEmployee.getEmployeeId());
-        testCompensation.setSalary(100000);
-        LocalDate effectiveDate = LocalDate.parse("2023-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        testCompensation.setEffectiveDate(effectiveDate);
+        String effectiveDateAsString = "2023-01-01";
+        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, effectiveDateAsString);
 
         restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), testCompensation, Compensation.class);
 
         // Read compensation
         Compensation readCompensation = restTemplate.getForEntity(compensationIdUrl, Compensation.class, createdEmployee.getEmployeeId()).getBody();
+
+        // Verify that the read compensation is not null and is equivalent to the test compensation
         assertNotNull(readCompensation);
-        assertEquals(createdEmployee.getEmployeeId(), readCompensation.getEmployeeId());
-        assertEquals(100000, readCompensation.getSalary());
-        assertEquals(effectiveDate, readCompensation.getEffectiveDate());
+        assertCompensationEquivalence(testCompensation, readCompensation);
     }
 
     @Test
-    public void testCreateCompensationWithInvalidSalary() {
-        // Create compensation with invalid salary
-        Compensation testCompensation = new Compensation();
-        testCompensation.setEmployeeId(createdEmployee.getEmployeeId());
-        testCompensation.setSalary(-100); // Invalid salary, can't be negative
-        LocalDate effectiveDate = LocalDate.parse("2023-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        testCompensation.setEffectiveDate(effectiveDate);
+    public void testCreateCompensationWithNegativeSalary() {
+        // Create compensation
+        String effectiveDateAsString = "2023-01-01";
+        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), -100, effectiveDateAsString);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Compensation> entity = new HttpEntity<>(testCompensation, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(compensationUrl + "/" + createdEmployee.getEmployeeId(), HttpMethod.POST, entity, String.class);
+        // Test the post for the created compensation
+        ResponseEntity<String> response = restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), testCompensation, String.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertTrue(response.getBody().contains("Salary must be positive or zero"));
     }
 
     @Test
-    public void testCreateCompensationWithInvalidDateFormat() {
-        // Create compensation with invalid date format
-        Compensation testCompensation = new Compensation();
-        testCompensation.setEmployeeId(createdEmployee.getEmployeeId());
-        testCompensation.setSalary(100000);
-        String invalidDate = "01-01-2023"; // Invalid date format, should be yyyy-MM-dd
+    public void testCreateCompensationWithNullSalary() {
+        // Create compensation JSON with null salary
+        String compensationJson = String.format("{\"employeeId\":\"%s\",\"salary\":null,\"effectiveDate\":\"2023-01-01\"}", createdEmployee.getEmployeeId());
 
+        // Need to manually set due to null salary
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        String compensationJson = String.format("{\"employeeId\":\"%s\",\"salary\":100000,\"effectiveDate\":\"%s\"}", createdEmployee.getEmployeeId(), invalidDate);
         HttpEntity<String> entity = new HttpEntity<>(compensationJson, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(compensationUrl + "/" + createdEmployee.getEmployeeId(), HttpMethod.POST, entity, String.class);
+        // Attempt to post the compensation
+        ResponseEntity<String> response = restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), entity, String.class);
 
+        // Verify that the creation attempt returns the correct error message
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains("Salary cannot be null"));
+    }
+
+    @Test
+    public void testCreateCompensationWithInvalidDateFormat() {
+        // Compensation JSON with invalid date format
+        String invalidDate = "01-01-2023"; // Invalid date format, should be yyyy-MM-dd
+        String compensationJson = String.format("{\"employeeId\":\"%s\",\"salary\":100000,\"effectiveDate\":\"%s\"}", createdEmployee.getEmployeeId(), invalidDate);
+
+        // Need to manually set due to invalid date format
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(compensationJson, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), entity, String.class);
+
+        // Verify that the creation attempt returns the correct error message
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         System.out.println(response.getBody());
-        assertTrue(response.getBody().contains("Invalid date format. Please use the format yyyy-MM-dd."));
+        assertTrue(response.getBody().contains(INVALID_DATE_FORMAT));
+    }
+
+    @Test
+    public void testCreateCompensationWithNullDate() {
+        // Create compensation JSON with null effective date
+        String compensationJson = String.format("{\"employeeId\":\"%s\",\"salary\":100000,\"effectiveDate\":null}", createdEmployee.getEmployeeId());
+
+        // Need to manually set due to null effective date
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(compensationJson, headers);
+
+        // Attempt to post the compensation
+        ResponseEntity<String> response = restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), entity, String.class);
+
+        // Verify that the creation attempt returns the correct error message
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains("Effective date cannot be null"));
+    }
+
+    @Test
+    public void testReadCompensationWhenNoCompensationExists() {
+        // Attempt to read compensation for an employee with no compensation
+        ResponseEntity<String> response = restTemplate.getForEntity(compensationIdUrl, String.class, createdEmployee.getEmployeeId());
+
+        // Verify that the read attempt returns the correct error message
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains(COMPENSATION_NOT_FOUND));
+    }
+
+    @Test
+    public void testCreateCompensationForNonExistentEmployee() {
+        // Create compensation for a non-existent employee
+        String nonExistentEmployeeId = "non-existent-id";
+        String effectiveDateAsString = "2023-01-01";
+        Compensation testCompensation = createTestCompensation(nonExistentEmployeeId, 100000, effectiveDateAsString);
+
+        // Attempt to post the compensation
+        ResponseEntity<String> response = restTemplate.postForEntity(compensationUrl + "/" + nonExistentEmployeeId, testCompensation, String.class);
+
+        // Verify that the creation attempt returns the correct error message
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
+    }
+
+    @Test
+    public void testReadCompensationForNonExistentEmployee() {
+        // Attempt to read compensation for a non-existent employee
+        String nonExistentEmployeeId = "non-existent-id";
+        ResponseEntity<String> response = restTemplate.getForEntity(compensationIdUrl, String.class, nonExistentEmployeeId);
+
+        // Verify that the read attempt returns the correct error message
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
     }
 
     @Test
@@ -139,18 +204,12 @@ public class CompensationServiceImplTest {
         // Soft delete the employee
         restTemplate.delete(employeeUrl + "/" + createdEmployee.getEmployeeId());
 
-        // Attempt to create compensation for the soft-deleted employee
-        Compensation testCompensation = new Compensation();
-        testCompensation.setEmployeeId(createdEmployee.getEmployeeId());
-        testCompensation.setSalary(100000);
-        LocalDate effectiveDate = LocalDate.parse("2023-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        testCompensation.setEffectiveDate(effectiveDate);
+        // Create compensation
+        String effectiveDateAsString = "2023-01-01";
+        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, effectiveDateAsString);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Compensation> entity = new HttpEntity<>(testCompensation, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(compensationUrl + "/" + createdEmployee.getEmployeeId(), HttpMethod.POST, entity, String.class);
+        // Attempt to post a compensation for a soft-deleted employee
+        ResponseEntity<String> response = restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), testCompensation, String.class);
 
         // Verify that the creation attempt returns the correct error message
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -161,23 +220,36 @@ public class CompensationServiceImplTest {
     @Test
     public void testReadCompensationForSoftDeletedEmployee() {
         // Create compensation
-        Compensation testCompensation = new Compensation();
-        testCompensation.setEmployeeId(createdEmployee.getEmployeeId());
-        testCompensation.setSalary(100000);
-        LocalDate effectiveDate = LocalDate.parse("2023-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        testCompensation.setEffectiveDate(effectiveDate);
+        String effectiveDateAsString = "2023-01-01";
+        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, effectiveDateAsString);
 
+        // Post the compensation
         restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), testCompensation, Compensation.class);
 
         // Soft delete the employee
         restTemplate.delete(employeeUrl + "/" + createdEmployee.getEmployeeId());
 
         // Attempt to read compensation for the soft-deleted employee
-        ResponseEntity<String> response = restTemplate.exchange(compensationIdUrl, HttpMethod.GET, null, String.class, createdEmployee.getEmployeeId());
+        ResponseEntity<String> response = restTemplate.getForEntity(compensationIdUrl, String.class, createdEmployee.getEmployeeId());
 
         // Verify that the read attempt returns the correct error message
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNotNull(response.getBody());
         assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
+    }
+
+    private Compensation createTestCompensation(String employeeId, int salary, String effectiveDateStr) {
+        Compensation testCompensation = new Compensation();
+        testCompensation.setEmployeeId(employeeId);
+        testCompensation.setSalary(salary);
+        LocalDate effectiveDate = LocalDate.parse(effectiveDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        testCompensation.setEffectiveDate(effectiveDate);
+        return testCompensation;
+    }
+
+    private void assertCompensationEquivalence(Compensation expected, Compensation actual) {
+        assertEquals(expected.getEmployeeId(), actual.getEmployeeId());
+        assertEquals(expected.getSalary(), actual.getSalary());
+        assertEquals(expected.getEffectiveDate(), actual.getEffectiveDate());
     }
 }

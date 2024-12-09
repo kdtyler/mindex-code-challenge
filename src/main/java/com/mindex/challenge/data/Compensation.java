@@ -10,8 +10,9 @@ public class Compensation {
 
     @NotNull(message = "Salary cannot be null")
     @PositiveOrZero(message = "Salary must be positive or zero")
-    private int salary;
+    private Integer salary; // Integer instead of int to properly error check null inputs
 
+    @NotNull(message = "Effective date cannot be null")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate effectiveDate;
 
@@ -28,11 +29,11 @@ public class Compensation {
         this.employeeId = employeeId;
     }
 
-    public int getSalary() {
+    public Integer getSalary() {
         return salary;
     }
 
-    public void setSalary(int salary) {
+    public void setSalary(Integer salary) {
         this.salary = salary;
     }
 
