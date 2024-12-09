@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.mindex.challenge.exceptionhandling.ErrorMessages.EMPLOYEE_NOT_FOUND;
+
 @Service
 public class ReportingStructureServiceImpl implements ReportingStructureService {
 
@@ -27,7 +29,7 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
 
         Employee employee = employeeRepository.findByEmployeeIdAndIsDeletedFalse(employeeId);
         if (employee == null) {
-            throw new EmployeeNotFoundException("Employee not found with id: " + employeeId);
+            throw new EmployeeNotFoundException(EMPLOYEE_NOT_FOUND + employeeId);
         }
 
         ReportingStructure reportingStructure = new ReportingStructure();

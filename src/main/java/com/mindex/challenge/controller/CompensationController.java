@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-//import javax.validation.Valid;
-
 @RestController
 public class CompensationController {
 
@@ -20,13 +18,15 @@ public class CompensationController {
 
     @PostMapping("/compensation/{employeeId}")
     public Compensation create(@PathVariable String employeeId, @Valid @RequestBody Compensation compensation) {
-        LOG.debug("Received compensation create request for [{}]", compensation);
+        LOG.debug("Received compensation create request for employeeId [{}] and compensation [{}]", employeeId, compensation);
+
         return compensationService.create(employeeId, compensation);
     }
 
     @GetMapping("/compensation/{employeeId}")
     public Compensation read(@PathVariable String employeeId) {
         LOG.debug("Received compensation read request for employeeId [{}]", employeeId);
+
         return compensationService.read(employeeId);
     }
 }

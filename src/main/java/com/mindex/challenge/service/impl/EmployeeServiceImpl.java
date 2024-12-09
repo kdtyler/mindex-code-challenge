@@ -12,6 +12,8 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.UUID;
 
+import static com.mindex.challenge.exceptionhandling.ErrorMessages.EMPLOYEE_NOT_FOUND;
+
 @Service
 @Validated
 public class EmployeeServiceImpl implements EmployeeService {
@@ -38,7 +40,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findByEmployeeIdAndIsDeletedFalse(id);
 
         if (employee == null) {
-            throw new EmployeeNotFoundException("Employee not found with id: " + id);
+            throw new EmployeeNotFoundException(EMPLOYEE_NOT_FOUND + id);
         }
 
         return employee;
@@ -52,7 +54,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee existingEmployee = employeeRepository.findByEmployeeId(employee.getEmployeeId());
 
         if (existingEmployee == null || existingEmployee.getIsDeleted()) {
-            throw new EmployeeNotFoundException("Cannot update a non-existent or soft-deleted employee with id: " + employee.getEmployeeId());
+            throw new EmployeeNotFoundException(EMPLOYEE_NOT_FOUND + employee.getEmployeeId());
         }
 
         return employeeRepository.save(employee);

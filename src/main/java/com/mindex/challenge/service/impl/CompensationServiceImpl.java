@@ -4,6 +4,7 @@ import com.mindex.challenge.dao.CompensationRepository;
 import com.mindex.challenge.dao.EmployeeRepository;
 import com.mindex.challenge.data.Compensation;
 import com.mindex.challenge.data.Employee;
+import com.mindex.challenge.exceptionhandling.CompensationNotFoundException;
 import com.mindex.challenge.exceptionhandling.EmployeeNotFoundException;
 import com.mindex.challenge.service.CompensationService;
 import org.slf4j.Logger;
@@ -11,6 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+
+import static com.mindex.challenge.exceptionhandling.ErrorMessages.COMPENSATION_NOT_FOUND;
+import static com.mindex.challenge.exceptionhandling.ErrorMessages.EMPLOYEE_NOT_FOUND;
 
 @Service
 @Validated
@@ -31,7 +35,7 @@ public class CompensationServiceImpl implements CompensationService {
         // Will only create a compensation if the employee is not soft-deleted
         Employee employee = employeeRepository.findByEmployeeIdAndIsDeletedFalse(employeeId);
         if (employee == null) {
-            throw new EmployeeNotFoundException("Employee not found with id: " + employeeId);
+            throw new EmployeeNotFoundException(EMPLOYEE_NOT_FOUND + employeeId);
         }
         compensation.setEmployeeId(employeeId);
         return compensationRepository.insert(compensation);
@@ -44,12 +48,12 @@ public class CompensationServiceImpl implements CompensationService {
         // Check if employee is soft-deleted
         Employee employee = employeeRepository.findByEmployeeIdAndIsDeletedFalse(employeeId);
         if (employee == null) {
-            throw new EmployeeNotFoundException("Employee not found with id: " + employeeId);
+            throw new EmployeeNotFoundException(EMPLOYEE_NOT_FOUND + employeeId);
         }
 
         Compensation compensation = compensationRepository.findByEmployeeId(employeeId);
         if (compensation == null) {
-            throw new RuntimeException("Invalid employeeId: " + employeeId);
+            throw new CompensationNotFoundException(COMPENSATION_NOT_FOUND + employeeId);
         }
         return compensation;
     }

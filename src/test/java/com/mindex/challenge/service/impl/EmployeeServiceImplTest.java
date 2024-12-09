@@ -14,6 +14,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.UUID;
 
+import static com.mindex.challenge.exceptionhandling.ErrorMessages.EMPLOYEE_NOT_FOUND;
 import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
@@ -114,7 +115,7 @@ public class EmployeeServiceImplTest {
         // Verify that the update attempt returns the correct error message
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().contains("Cannot update a non-existent or soft-deleted employee with id:"));
+        assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
     }
 
 

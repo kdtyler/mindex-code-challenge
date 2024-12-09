@@ -17,6 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+import static com.mindex.challenge.exceptionhandling.ErrorMessages.EMPLOYEE_NOT_FOUND;
 import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
@@ -154,7 +155,7 @@ public class CompensationServiceImplTest {
         // Verify that the creation attempt returns the correct error message
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().contains("Employee not found with id:"));
+        assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
     }
 
     @Test
@@ -177,6 +178,6 @@ public class CompensationServiceImplTest {
         // Verify that the read attempt returns the correct error message
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().contains("Employee not found with id:"));
+        assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
     }
 }
