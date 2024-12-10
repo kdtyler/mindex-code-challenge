@@ -87,10 +87,12 @@ public class EmployeeServiceImplTest {
         restTemplate.delete(employeeIdUrl, createdEmployee.getEmployeeId());
 
         // Attempt to read the soft-deleted employee
-        ResponseEntity<Employee> response = restTemplate.getForEntity(employeeIdUrl, Employee.class, createdEmployee.getEmployeeId());
+        ResponseEntity<String> response = restTemplate.getForEntity(employeeIdUrl, String.class, createdEmployee.getEmployeeId());
 
         // Verify that the employee is not found
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
     }
 
     @Test
@@ -105,10 +107,7 @@ public class EmployeeServiceImplTest {
         // Attempt to update the soft-deleted employee
         createdEmployee.setPosition("Updated Position");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(createdEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(createdEmployee);
 
         ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, createdEmployee.getEmployeeId());
 
@@ -118,15 +117,35 @@ public class EmployeeServiceImplTest {
         assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
     }
 
+    @Test
+    public void testReadNonExistentEmployee() {
+        String nonExistentEmployeeId = UUID.randomUUID().toString();
+
+        ResponseEntity<String> response = restTemplate.getForEntity(employeeIdUrl, String.class, nonExistentEmployeeId);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
+    }
+
+    @Test
+    public void testUpdateNonExistentEmployee() {
+        testEmployee.setEmployeeId(UUID.randomUUID().toString());
+
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
+
+        ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, testEmployee.getEmployeeId());
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains(EMPLOYEE_NOT_FOUND));
+    }
 
     @Test
     public void testCreateEmployeeWithNullFirstName() {
         testEmployee.setFirstName(null);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
 
@@ -139,10 +158,7 @@ public class EmployeeServiceImplTest {
     public void testCreateEmployeeWithNullLastName() {
         testEmployee.setLastName(null);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
 
@@ -155,10 +171,7 @@ public class EmployeeServiceImplTest {
     public void testCreateEmployeeWithNullDepartment() {
         testEmployee.setDepartment(null);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
 
@@ -171,10 +184,7 @@ public class EmployeeServiceImplTest {
     public void testCreateEmployeeWithNullPosition() {
         testEmployee.setPosition(null);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
 
@@ -187,10 +197,7 @@ public class EmployeeServiceImplTest {
     public void testCreateEmployeeWithEmptyFirstName() {
         testEmployee.setFirstName("");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
 
@@ -203,10 +210,7 @@ public class EmployeeServiceImplTest {
     public void testCreateEmployeeWithEmptyLastName() {
         testEmployee.setLastName("");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
 
@@ -219,10 +223,7 @@ public class EmployeeServiceImplTest {
     public void testCreateEmployeeWithEmptyDepartment() {
         testEmployee.setDepartment("");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
 
@@ -235,10 +236,7 @@ public class EmployeeServiceImplTest {
     public void testCreateEmployeeWithEmptyPosition() {
         testEmployee.setPosition("");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
 
@@ -252,10 +250,7 @@ public class EmployeeServiceImplTest {
     public void testCreateEmployeeWithInvalidEmployeeId() {
         testEmployee.setEmployeeId("invalid-id");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.postForEntity(employeeUrl, request, String.class);
 
@@ -268,10 +263,7 @@ public class EmployeeServiceImplTest {
     public void testUpdateEmployeeWithNullFirstName() {
         testEmployee.setFirstName(null);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, testEmployee.getEmployeeId());
 
@@ -284,10 +276,7 @@ public class EmployeeServiceImplTest {
     public void testUpdateEmployeeWithEmptyFirstName() {
         testEmployee.setFirstName("");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, testEmployee.getEmployeeId());
 
@@ -300,10 +289,7 @@ public class EmployeeServiceImplTest {
     public void testUpdateEmployeeWithNullLastName() {
         testEmployee.setLastName(null);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, testEmployee.getEmployeeId());
 
@@ -316,10 +302,7 @@ public class EmployeeServiceImplTest {
     public void testUpdateEmployeeWithEmptyLastName() {
         testEmployee.setLastName("");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, testEmployee.getEmployeeId());
 
@@ -332,10 +315,7 @@ public class EmployeeServiceImplTest {
     public void testUpdateEmployeeWithNullDepartment() {
         testEmployee.setDepartment(null);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, testEmployee.getEmployeeId());
 
@@ -348,10 +328,7 @@ public class EmployeeServiceImplTest {
     public void testUpdateEmployeeWithEmptyDepartment() {
         testEmployee.setDepartment("");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, testEmployee.getEmployeeId());
 
@@ -364,10 +341,7 @@ public class EmployeeServiceImplTest {
     public void testUpdateEmployeeWithNullPosition() {
         testEmployee.setPosition(null);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, testEmployee.getEmployeeId());
 
@@ -380,10 +354,7 @@ public class EmployeeServiceImplTest {
     public void testUpdateEmployeeWithEmptyPosition() {
         testEmployee.setPosition("");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Employee> request = new HttpEntity<>(testEmployee, headers);
+        HttpEntity<Employee> request = createHttpEntity(testEmployee);
 
         ResponseEntity<String> response = restTemplate.exchange(employeeIdUrl, HttpMethod.PUT, request, String.class, testEmployee.getEmployeeId());
 
@@ -397,5 +368,11 @@ public class EmployeeServiceImplTest {
         assertEquals(expected.getLastName(), actual.getLastName());
         assertEquals(expected.getDepartment(), actual.getDepartment());
         assertEquals(expected.getPosition(), actual.getPosition());
+    }
+
+    private HttpEntity<Employee> createHttpEntity(Employee employee) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return new HttpEntity<>(employee, headers);
     }
 }
