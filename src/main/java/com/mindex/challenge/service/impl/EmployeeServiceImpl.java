@@ -46,7 +46,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employee;
     }
 
-    // Currently acts purely as an update, not an updateOrCreate. Will not update soft-deleted employees
+    // Currently acts purely as an update, not a createOrUpdate. Will also not update soft-deleted employees
     @Override
     public Employee update(Employee employee) {
         LOG.debug("Updating employee [{}]", employee);

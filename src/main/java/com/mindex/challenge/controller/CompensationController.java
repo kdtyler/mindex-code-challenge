@@ -19,17 +19,17 @@ public class CompensationController {
     @Autowired
     private CompensationService compensationService;
 
-    @PostMapping("/{employeeId}")
-    public Compensation create(@PathVariable String employeeId, @Valid @RequestBody Compensation compensation) {
-        LOG.debug("Received compensation create request for employeeId [{}] and compensation [{}]", employeeId, compensation);
+    @PostMapping("/{id}")
+    public Compensation create(@PathVariable String id, @Valid @RequestBody Compensation compensation) {
+        LOG.debug("Received compensation create request for employeeId [{}] and compensation [{}]", id, compensation);
 
-        return compensationService.create(employeeId, compensation);
+        return compensationService.create(id, compensation);
     }
 
-    @GetMapping("/{employeeId}")
-    public Compensation read(@PathVariable String employeeId) {
-        LOG.debug("Received compensation read request for employeeId [{}]", employeeId);
+    @GetMapping("/{id}")
+    public Compensation read(@PathVariable String id) {
+        LOG.debug("Received compensation read request for employeeId [{}]", id);
 
-        return compensationService.read(employeeId);
+        return compensationService.read(id);
     }
 }

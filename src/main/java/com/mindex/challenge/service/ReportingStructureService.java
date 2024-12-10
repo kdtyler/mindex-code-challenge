@@ -5,5 +5,5 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 public interface ReportingStructureService {
-    ReportingStructure getReportingStructureByEmployeeId(String employeeId);
+    ReportingStructure read(String employeeId);
 }

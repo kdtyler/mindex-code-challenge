@@ -24,7 +24,7 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
     private EmployeeRepository employeeRepository;
 
     @Override
-    public ReportingStructure getReportingStructureByEmployeeId(String employeeId) {
+    public ReportingStructure read(String employeeId) {
         LOG.debug("Getting reporting structure for employee with id [{}]", employeeId);
 
         Employee employee = employeeRepository.findByEmployeeIdAndIsDeletedFalse(employeeId);
@@ -61,8 +61,7 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
             numberOfReports += activeDirectReports.size();
 
             for (Employee directReport : activeDirectReports) {
-                Employee checkedDirectReport = employeeRepository.findByEmployeeIdAndIsDeletedFalse(directReport.getEmployeeId());
-                numberOfReports += calculateNumberOfReports(checkedDirectReport);
+                numberOfReports += calculateNumberOfReports(directReport);
             }
         }
         return numberOfReports;

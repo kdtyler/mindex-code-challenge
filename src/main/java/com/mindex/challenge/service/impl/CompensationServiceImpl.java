@@ -4,6 +4,7 @@ import com.mindex.challenge.dao.CompensationRepository;
 import com.mindex.challenge.dao.EmployeeRepository;
 import com.mindex.challenge.data.Compensation;
 import com.mindex.challenge.data.Employee;
+import com.mindex.challenge.exceptionhandling.CompensationAlreadyExistsException;
 import com.mindex.challenge.exceptionhandling.CompensationNotFoundException;
 import com.mindex.challenge.exceptionhandling.EmployeeNotFoundException;
 import com.mindex.challenge.service.CompensationService;
@@ -13,8 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import static com.mindex.challenge.exceptionhandling.ErrorMessages.COMPENSATION_NOT_FOUND;
-import static com.mindex.challenge.exceptionhandling.ErrorMessages.EMPLOYEE_NOT_FOUND;
+import static com.mindex.challenge.exceptionhandling.ErrorMessages.*;
 
 @Service
 @Validated
@@ -37,6 +37,14 @@ public class CompensationServiceImpl implements CompensationService {
         if (employee == null) {
             throw new EmployeeNotFoundException(EMPLOYEE_NOT_FOUND + employeeId);
         }
+
+        // Check if a compensation already exists for the employee
+        Compensation existingCompensation = compensationRepository.findByEmployeeId(employeeId);
+        if (existingCompensation != null) {
+            throw new CompensationAlreadyExistsException(COMPENSATION_ALREADY_EXISTS + employeeId);
+        }
+
+        // Create new compensation
         compensation.setEmployeeId(employeeId);
         return compensationRepository.insert(compensation);
     }

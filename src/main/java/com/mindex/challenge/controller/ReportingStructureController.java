@@ -9,6 +9,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/reportingStructure")
 @Validated
 public class ReportingStructureController {
 
@@ -17,10 +18,10 @@ public class ReportingStructureController {
     @Autowired
     private ReportingStructureService reportingStructureService;
 
-    @GetMapping("/reportingStructure/{id}")
+    @GetMapping("/{id}")
     public ReportingStructure read(@PathVariable String id) {
         LOG.debug("Received reporting structure get request for id [{}]", id);
 
-        return reportingStructureService.getReportingStructureByEmployeeId(id);
+        return reportingStructureService.read(id);
     }
 }

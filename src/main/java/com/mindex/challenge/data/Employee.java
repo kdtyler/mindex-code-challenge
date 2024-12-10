@@ -26,8 +26,8 @@ public class Employee {
     private String position;
 
     /*
-    * Currently may include soft-deleted employees. Make sure to filter out
-    * if doing calculations where you want to only include active employees
+    * directReports currently may include soft-deleted employees. Make sure to filter out
+    * if doing calculations in service layer where you want to only include active employees
      */
     private List<Employee> directReports;
 

@@ -24,6 +24,8 @@ import static org.junit.Assert.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class CompensationServiceImplTest {
 
+    private static final String EFFECTIVE_DATE = "2023-01-03";
+
     private String compensationUrl;
     private String compensationIdUrl;
     private String employeeUrl;
@@ -63,8 +65,7 @@ public class CompensationServiceImplTest {
     @Test
     public void testCreateCompensation() {
         // Create test compensation
-        String effectiveDateAsString = "2023-01-01";
-        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, effectiveDateAsString);
+        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, EFFECTIVE_DATE);
 
         // Post the compensation
         Compensation createdCompensation = restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), testCompensation, Compensation.class).getBody();
@@ -77,8 +78,7 @@ public class CompensationServiceImplTest {
     @Test
     public void testReadCompensation() {
         // Create compensation
-        String effectiveDateAsString = "2023-01-01";
-        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, effectiveDateAsString);
+        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, EFFECTIVE_DATE);
 
         restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), testCompensation, Compensation.class);
 
@@ -91,10 +91,25 @@ public class CompensationServiceImplTest {
     }
 
     @Test
+    public void testCreateCompensationAlreadyExists() {
+        // Create initial compensation
+        Compensation initialCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, EFFECTIVE_DATE);
+        restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), initialCompensation, Compensation.class);
+
+        // Attempt to create another compensation for the same employee
+        Compensation duplicateCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 120000, EFFECTIVE_DATE);
+        ResponseEntity<String> response = restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), duplicateCompensation, String.class);
+
+        // Verify that the creation attempt returns the correct error message
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody().contains(COMPENSATION_ALREADY_EXISTS));
+    }
+
+    @Test
     public void testCreateCompensationWithNegativeSalary() {
         // Create compensation
-        String effectiveDateAsString = "2023-01-01";
-        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), -100, effectiveDateAsString);
+        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), -100, EFFECTIVE_DATE);
 
         // Test the post for the created compensation
         ResponseEntity<String> response = restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), testCompensation, String.class);
@@ -175,8 +190,7 @@ public class CompensationServiceImplTest {
     public void testCreateCompensationForNonExistentEmployee() {
         // Create compensation for a non-existent employee
         String nonExistentEmployeeId = "non-existent-id";
-        String effectiveDateAsString = "2023-01-01";
-        Compensation testCompensation = createTestCompensation(nonExistentEmployeeId, 100000, effectiveDateAsString);
+        Compensation testCompensation = createTestCompensation(nonExistentEmployeeId, 100000, EFFECTIVE_DATE);
 
         // Attempt to post the compensation
         ResponseEntity<String> response = restTemplate.postForEntity(compensationUrl + "/" + nonExistentEmployeeId, testCompensation, String.class);
@@ -205,8 +219,7 @@ public class CompensationServiceImplTest {
         restTemplate.delete(employeeUrl + "/" + createdEmployee.getEmployeeId());
 
         // Create compensation
-        String effectiveDateAsString = "2023-01-01";
-        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, effectiveDateAsString);
+        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, EFFECTIVE_DATE);
 
         // Attempt to post a compensation for a soft-deleted employee
         ResponseEntity<String> response = restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), testCompensation, String.class);
@@ -220,8 +233,7 @@ public class CompensationServiceImplTest {
     @Test
     public void testReadCompensationForSoftDeletedEmployee() {
         // Create compensation
-        String effectiveDateAsString = "2023-01-01";
-        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, effectiveDateAsString);
+        Compensation testCompensation = createTestCompensation(createdEmployee.getEmployeeId(), 100000, EFFECTIVE_DATE);
 
         // Post the compensation
         restTemplate.postForEntity(compensationUrl + "/" + createdEmployee.getEmployeeId(), testCompensation, Compensation.class);
